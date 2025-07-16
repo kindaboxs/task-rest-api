@@ -1,5 +1,5 @@
 import { createRoute, z } from '@hono/zod-openapi'
-import { jsonContent, jsonContentRequired } from 'stoker/openapi/helpers'
+import { jsonContent, jsonContentOneOf, jsonContentRequired } from 'stoker/openapi/helpers'
 import { createErrorSchema, IdParamsSchema } from 'stoker/openapi/schemas'
 import { notFoundSchema } from '@/constants'
 import * as HttpStatusCodes from '@/utils/http-status-codes'
@@ -91,6 +91,51 @@ export const getOne = createRoute({
   },
 })
 
+export const patch = createRoute({
+  tags: ['Tasks'],
+  method: 'patch',
+  path: '/tasks/{id}',
+  request: {
+    params: IdParamsSchema,
+    body: jsonContentRequired(
+      z.object({
+        name: z.optional(z.string().min(1, 'Name is required').max(255, 'Name is too long')),
+        done: z.optional(z.boolean()),
+      }),
+      'The Task to update',
+    ),
+  },
+  responses: {
+    [HttpStatusCodes.OK]: jsonContent(
+      z.object({
+        id: z.number(),
+        name: z.string(),
+        done: z.boolean(),
+        createdAt: z.date(),
+        updatedAt: z.date(),
+      }),
+      'The updated Task',
+    ),
+    [HttpStatusCodes.NOT_FOUND]: jsonContent(
+      notFoundSchema,
+      'Task not found',
+    ),
+    [HttpStatusCodes.UNPROCESSABLE_ENTITY]: jsonContentOneOf(
+      [
+        createErrorSchema(
+          z.object({
+            name: z.optional(z.string().min(1, 'Name is required').max(255, 'Name is too long')),
+            done: z.optional(z.boolean()),
+          }),
+        ),
+        createErrorSchema(IdParamsSchema),
+      ],
+      'The validation error(s)',
+    ),
+  },
+})
+
 export type ListRoute = typeof list
 export type CreateRoute = typeof create
 export type GetOneRoute = typeof getOne
+export type PatchRoute = typeof patch
