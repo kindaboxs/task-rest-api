@@ -126,9 +126,9 @@ export const patch = createRoute({
           z.object({
             name: z.optional(z.string().min(1, 'Name is required').max(255, 'Name is too long')),
             done: z.optional(z.boolean()),
-          })
-            .or(createErrorSchema(IdParamsSchema)),
+          }),
         ),
+        createErrorSchema(IdParamsSchema),
       ],
       'The validation error(s)',
     ),
